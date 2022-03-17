@@ -25,6 +25,10 @@ from torch import nn
 from pytorch_quantization.tensor_quant import QuantDescriptor, tensor_quant, fake_tensor_quant
 from pytorch_quantization.nn.modules.clip import Clip
 
+import sys
+sys.path.append("../../../../")
+from mulaw import mu_encode
+
 from pytorch_quantization import calib
 
 import pytorch_quantization.utils as quant_utils
@@ -299,12 +303,14 @@ class TensorQuantizer(nn.Module):
     def _quant_forward(self, inputs):
         """Quantized forward pass."""
         if self._learn_amax:
+            raise Exception("mu law does not support learned amax")
             inputs = self.clip(inputs)
             amax = torch.max(-self.clip.clip_value_min, self.clip.clip_value_max).detach()
         else:
             amax = self._get_amax(inputs)
 
         if self._fake_quant:
+            raise Exception("mu law does not support fake quant")
             if not TensorQuantizer.use_fb_fake_quant:
                 outputs = fake_tensor_quant(inputs, amax, self._num_bits, self._unsigned, self._narrow_range)
             else:
@@ -312,7 +318,9 @@ class TensorQuantizer(nn.Module):
                     raise Exception("Exporting to ONNX in fp16 is not supported. Please export in fp32, i.e. disable AMP.")
                 outputs = self._fb_fake_quant(inputs, amax)
         else:
-            outputs, self._scale = tensor_quant(inputs, amax, self._num_bits, self._unsigned)
+            # assert self._scale is None
+            # outputs, self._scale = tensor_quant(inputs, amax, self._num_bits, self._unsigned)
+            outputs, _ = mu_encode(inputs, amax, self._num_bits, self._unsigned)
 
         return outputs
 
