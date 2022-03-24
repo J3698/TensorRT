@@ -27,7 +27,7 @@ from pytorch_quantization.nn.modules.clip import Clip
 
 import sys
 sys.path.append("../../../../")
-from mulaw import mu_encode
+from mulaw import MuLaw
 
 from pytorch_quantization import calib
 
@@ -82,6 +82,7 @@ class TensorQuantizer(nn.Module):
         self._learn_amax = quant_desc.learn_amax
         self._unsigned = quant_desc.unsigned
         self._narrow_range = quant_desc.narrow_range
+        self._mu_quantizer = None
 
         self._scale = None if not quant_desc.fake_quant else 1.
         self._disabled = disabled
@@ -320,7 +321,7 @@ class TensorQuantizer(nn.Module):
         else:
             # assert self._scale is None
             # outputs, self._scale = tensor_quant(inputs, amax, self._num_bits, self._unsigned)
-            outputs, _ = mu_encode(inputs, amax, self._num_bits, self._unsigned)
+            outputs = self._mu_quantizer(inputs)
 
         return outputs
 
