@@ -24,14 +24,14 @@ from absl import logging
 from torch import nn
 
 from pytorch_quantization.nn import TensorQuantizer
-from pytorch_quantization.tensor_quant import QuantDescriptor, QUANT_DESC_8BIT_PER_TENSOR
+from pytorch_quantization.tensor_quant import QuantDescriptor, QUANT_DESC_8BIT_PER_TENSOR, QUANT_DESC_MU_LAW
 
 
 class QuantMixin():
     """Mixin class for adding basic quantization logic to quantized modules"""
 
-    default_quant_desc_input = QUANT_DESC_8BIT_PER_TENSOR
-    default_quant_desc_weight = QUANT_DESC_8BIT_PER_TENSOR
+    default_quant_desc_input = QUANT_DESC_MU_LAW
+    default_quant_desc_weight = QUANT_DESC_MU_LAW
 
     @classmethod
     def set_default_quant_desc_input(cls, value):

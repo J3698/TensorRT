@@ -27,7 +27,7 @@ from pytorch_quantization.nn.modules.clip import Clip
 
 import sys
 sys.path.append("../../../../")
-from mulaw import MuLaw
+import mulaw
 
 from pytorch_quantization import calib
 
@@ -75,6 +75,9 @@ class TensorQuantizer(nn.Module):
         """Initialize quantizer and set up required variables"""
         super(TensorQuantizer, self).__init__()
         # Expand quant_desc. Use quant_desc.dict would be eaiser, but adding one-by-one explicitly gives more control
+        self._mu_law = quant_desc._mu_law
+        self._mu_law_inv = quant_desc._mu_law_inv
+        self._mu = quant_desc._mu
         self._num_bits = quant_desc.num_bits
         self._fake_quant = quant_desc.fake_quant
         self._axis = quant_desc.axis
@@ -82,7 +85,7 @@ class TensorQuantizer(nn.Module):
         self._learn_amax = quant_desc.learn_amax
         self._unsigned = quant_desc.unsigned
         self._narrow_range = quant_desc.narrow_range
-        self._mu_quantizer = None
+        # self._mu_quantizer = None
 
         self._scale = None if not quant_desc.fake_quant else 1.
         self._disabled = disabled
@@ -320,8 +323,13 @@ class TensorQuantizer(nn.Module):
                 outputs = self._fb_fake_quant(inputs, amax)
         else:
             # assert self._scale is None
-            # outputs, self._scale = tensor_quant(inputs, amax, self._num_bits, self._unsigned)
-            outputs = self._mu_quantizer(inputs)
+            if self._mu_law:
+                assert self._num_bits > 1
+                outputs = mulaw.mu_quantize(inputs, self._num_bits, self._mu)
+            elif self._mu_law_inv:
+                outputs = mulaw.mu_inv_quantize(inputs, self._num_bits, self._mu)
+            else:
+                outputs, self._scale = tensor_quant(inputs, amax, self._num_bits, self._unsigned)
 
         return outputs
 
@@ -373,18 +381,26 @@ class TensorQuantizer(nn.Module):
     def extra_repr(self):
         if self._disabled:
             return "disabled"
-        s = "{}{}bit".format("unsigned " if self._unsigned else "", self._num_bits)
-        s += " narrow" if (self._narrow_range) else ""
-        s += " fake" if (self._fake_quant) else ""
-        s += " axis={}".format(self._axis) if self._axis is not None else " per-tensor"
-        s += " amax={}".format(self._short_amax())
-        s += " *{}".format(self._scale_amax) if self._scale_amax else ""
-        s += " learned" if (self._learn_amax) else ""
-        s += " calibrator={}".format(self._calibrator.__class__.__name__) if (self._calibrator is not None) else ""
-        s += " scale={}".format(self._scale) if self._scale is not None else ""
-        s += " quant" if (self._if_quant) else ""
-        s += " clip" if (self._if_clip) else ""
-        s += " calib" if (self._if_calib) else ""
+        if not self._mu_law and not self._mu_law_inv:
+            s = "{}{}bit".format("unsigned " if self._unsigned else "", self._num_bits)
+            s += " narrow" if (self._narrow_range) else ""
+            s += " fake" if (self._fake_quant) else ""
+            s += " axis={}".format(self._axis) if self._axis is not None else " per-tensor"
+            s += " amax={}".format(self._short_amax())
+            s += " *{}".format(self._scale_amax) if self._scale_amax else ""
+            s += " learned" if (self._learn_amax) else ""
+            s += " calibrator={}".format(self._calibrator.__class__.__name__) if (self._calibrator is not None) else ""
+            s += " scale={}".format(self._scale) if self._scale is not None else ""
+            s += " quant" if (self._if_quant) else ""
+            s += " clip" if (self._if_clip) else ""
+            s += " calib" if (self._if_calib) else ""
+        else:
+            s = "{}bit".format(self._num_bits)
+            if self._mu_law:
+                s += f" mu={self._mu}"
+            else:
+                s += f" mu_inv mu={self._mu}"
+
         return s
 
     def _load_from_state_dict(self, state_dict, prefix, *args, **kwargs):

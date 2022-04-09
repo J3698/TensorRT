@@ -100,6 +100,13 @@ class ScaledQuantDescriptor():
         self._calib_method = kwargs.pop('calib_method', "max")
         self._unsigned = kwargs.pop('unsigned', False)
         self._narrow_range = kwargs.pop('narrow_range', False)
+        self._mu_law = kwargs.pop('mu_law', False)
+        self._mu_law_inv = kwargs.pop('mu_law_inv', False)
+        self._mu = kwargs.pop('mu', None)
+        if self._mu is None:
+            self._mu = torch.tensor(127.)
+            # self._mu = torch.tensor(10.)
+        assert not (self._mu_law and self._mu_law_inv), "Can't use both mu law and mu law inverse"
 
         if kwargs:
             raise TypeError("Unused keys: {}".format(kwargs.keys()))
@@ -148,19 +155,26 @@ class ScaledQuantDescriptor():
 
     def __str__(self):
         s = (self._name + ': ') if self._name is not None else 'QuantDescriptor'
-        s += "({}{}bit".format("unsigned " if self._unsigned else "", self._num_bits)
-        s += " fake" if self._fake_quant else " real"
-        s += " axis={}".format(self._axis if self._axis is not None else " per-tensor")
-        if isinstance(self._amax, torch.Tensor):
-            s += " amax={}".format(np.array2string(self._amax.cpu().numpy().flatten(), edgeitems=1,
-                                                   formatter={'all': "{:.2e}".format}))
-        elif self._amax is not None:
-            s += " amax={_amax}"
-            s += " full_range"
-        if self._learn_amax:
-            s += " learn_amax"
-        if self._scale_amax:
-            s += " scale_amax={_scale_amax}"
+        if self._mu_law or self._mu_law_inv:
+            s += "({}bit".format(self._num_bits)
+            if self._mu_law:
+                s += f" mu={self._mu}"
+            else:
+                s += f"mu_inv mu={self._mu}"
+        else:
+            s += "({}{}bit".format("unsigned " if self._unsigned else "", self._num_bits)
+            s += " fake" if self._fake_quant else " real"
+            s += " axis={}".format(self._axis if self._axis is not None else " per-tensor")
+            if isinstance(self._amax, torch.Tensor):
+                s += " amax={}".format(np.array2string(self._amax.cpu().numpy().flatten(), edgeitems=1,
+                                                       formatter={'all': "{:.2e}".format}))
+            elif self._amax is not None:
+                s += " amax={_amax}"
+                s += " full_range"
+            if self._learn_amax:
+                s += " learn_amax"
+            if self._scale_amax:
+                s += " scale_amax={_scale_amax}"
         s += ")"
         return s.format(**self.__dict__)
 
@@ -219,6 +233,9 @@ class ScaledQuantDescriptor():
 QuantDescriptor = ScaledQuantDescriptor
 
 # Predefined descriptors
+QUANT_DESC_MU_LAW = QuantDescriptor(num_bits=8, name = "MuLaw", mu_law = True)
+QUANT_DESC_MU_LAW_INV = QuantDescriptor(num_bits=8, name = "MuLawInv", \
+                                        mu_law_inv = True)
 QUANT_DESC_8BIT_PER_TENSOR = QuantDescriptor(num_bits=8)
 QUANT_DESC_UNSIGNED_8BIT_PER_TENSOR = QuantDescriptor(num_bits=8, unsigned=True)
 QUANT_DESC_8BIT_CONV1D_WEIGHT_PER_CHANNEL = QuantDescriptor(num_bits=8, axis=(0))

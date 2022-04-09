@@ -61,20 +61,23 @@ class _QuantConvNd(torch.nn.modules.conv._ConvNd, _utils.QuantMixin):
         - set_default_quant_desc_weight: Set default_quant_desc_weight
     """
 
-    default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
-    default_quant_desc_weight = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
+    default_quant_desc_input = tensor_quant.QUANT_DESC_MU_LAW
+    default_quant_desc_weight = tensor_quant.QUANT_DESC_MU_LAW
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dilation, transposed, output_padding,
-                 groups, bias, padding_mode, quant_desc_input, quant_desc_weight):
-        super(_QuantConvNd, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation,
-                                           transposed, output_padding, groups, bias, padding_mode)
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding,
+                 dilation, transposed, output_padding, groups, bias,
+                 padding_mode, quant_desc_input, quant_desc_weight):
+        super(_QuantConvNd, self).__init__(in_channels, out_channels, \
+              kernel_size, stride, padding, dilation, transposed, \
+              output_padding, groups, bias, padding_mode)
         self.init_quantizer(quant_desc_input, quant_desc_weight)
 
     def _quant(self, input):
         """Apply quantization on input and weight
 
-        Function called by the classes lower in the hierarchy, which actually performs the quantization before forward
-        in the derivate class the particular Function.
+        Function called by the classes lower in the hierarchy, which actually
+        performs the quantization before forward in the derivate class the
+        particular Function.
 
         Arguments:
             input: in_features to quantize
@@ -90,7 +93,7 @@ class _QuantConvNd(torch.nn.modules.conv._ConvNd, _utils.QuantMixin):
 class QuantConv2d(_QuantConvNd):
     """Quantized 2D conv"""
 
-    default_quant_desc_weight = tensor_quant.QUANT_DESC_8BIT_CONV2D_WEIGHT_PER_CHANNEL
+    default_quant_desc_weight = tensor_quant.QUANT_DESC_MU_LAW
 
     def __init__(self,
                  in_channels,

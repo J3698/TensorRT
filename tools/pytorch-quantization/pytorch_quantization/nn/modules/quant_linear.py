@@ -56,8 +56,8 @@ class QuantLinear(nn.Linear, _utils.QuantMixin):
         - set_default_quant_desc_weight: Set default_quant_desc_weight
     """
 
-    default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
-    default_quant_desc_weight = tensor_quant.QUANT_DESC_8BIT_LINEAR_WEIGHT_PER_ROW
+    default_quant_desc_input = tensor_quant.QUANT_DESC_MU_LAW
+    default_quant_desc_weight = tensor_quant.QUANT_DESC_MU_LAW
 
     def __init__(self, in_features, out_features, bias=True, **kwargs):
         super(QuantLinear, self).__init__(in_features, out_features, bias)
