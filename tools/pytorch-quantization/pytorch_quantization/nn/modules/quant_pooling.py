@@ -27,31 +27,39 @@ from torch.nn.modules import pooling
 from . import _utils
 
 __all__ = [
-    "MaxPool1d", "QuantMaxPool1d", "MaxPool2d", "QuantMaxPool2d", "MaxPool3d", "QuantMaxPool3d",
-    "AvgPool1d", "QuantAvgPool1d", "AvgPool2d", "QuantAvgPool2d", "AvgPool3d", "QuantAvgPool3d",
-    "AdaptiveAvgPool1d", "QuantAdaptiveAvgPool1d", "AdaptiveAvgPool2d", "QuantAdaptiveAvgPool2d",
+    "MaxPool1d", "QuantMaxPool1d", "MaxPool2d", "QuantMaxPool2d", "MaxPool3d",
+    "QuantMaxPool3d",
+    "AvgPool1d", "QuantAvgPool1d", "AvgPool2d", "QuantAvgPool2d", "AvgPool3d",
+    "QuantAvgPool3d",
+    "AdaptiveAvgPool1d", "QuantAdaptiveAvgPool1d", "AdaptiveAvgPool2d",
+    "QuantAdaptiveAvgPool2d",
     "AdaptiveAvgPool3d", "QuantAdaptiveAvgPool3d"
 ]
 
 class QuantMaxPool1d(pooling.MaxPool1d, _utils.QuantInputMixin):
     """Quantized 1D maxpool"""
-    def __init__(self, kernel_size, stride=None, padding=0, dilation=1,
+    def __init__(self, kernel_size, stride=None, padding=0, dilation=1,\
                  return_indices=False, ceil_mode=False, **kwargs):
-        super(QuantMaxPool1d, self).__init__(kernel_size, stride, padding, dilation,
-                                             return_indices, ceil_mode)
-        quant_desc_input = _utils.pop_quant_desc_in_kwargs(self.__class__, input_only=True, **kwargs)
+        super(QuantMaxPool1d, self).__init__(kernel_size, stride, padding, \
+                                             dilation, return_indices, \
+                                             ceil_mode)
+        quant_desc_input = _utils.pop_quant_desc_in_kwargs(self.__class__, \
+                                                           input_only=True, \
+                                                           **kwargs)
         self.init_quantizer(quant_desc_input)
 
     def forward(self, input):
         quant_input = self._input_quantizer(input)
         return super(QuantMaxPool1d, self).forward(quant_input)
 
+
 class QuantMaxPool2d(pooling.MaxPool2d, _utils.QuantInputMixin):
     """Quantized 2D maxpool"""
     def __init__(self, kernel_size, stride=None, padding=0, dilation=1,
                  return_indices=False, ceil_mode=False, **kwargs):
-        super(QuantMaxPool2d, self).__init__(kernel_size, stride, padding, dilation,
-                                             return_indices, ceil_mode)
+        super(QuantMaxPool2d, self).__init__(kernel_size, stride, padding, \
+                                             dilation, return_indices, \
+                                             ceil_mode)
         quant_desc_input = _utils.pop_quant_desc_in_kwargs(self.__class__, input_only=True, **kwargs)
         self.init_quantizer(quant_desc_input)
 

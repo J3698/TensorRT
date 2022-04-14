@@ -97,7 +97,7 @@ class QuantMixin():
 class QuantInputMixin():
     """Mixin class for adding basic quantization logic to quantized modules"""
 
-    default_quant_desc_input = QUANT_DESC_8BIT_PER_TENSOR
+    default_quant_desc_input = QUANT_DESC_MU_LAW
 
     @classmethod
     def set_default_quant_desc_input(cls, value):
@@ -119,7 +119,7 @@ class QuantInputMixin():
         """
         if not inspect.stack()[1].function == "__init__":
             raise TypeError("{} should be only called by __init__ of quantized module.".format(__name__))
-        self._fake_quant = True
+        self._fake_quant = False
         if not quant_desc_input.fake_quant:
             raise ValueError("Only fake quantization is supported!")
 

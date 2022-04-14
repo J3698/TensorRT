@@ -94,6 +94,7 @@ class QuantConv2d(_QuantConvNd):
     """Quantized 2D conv"""
 
     default_quant_desc_weight = tensor_quant.QUANT_DESC_MU_LAW
+    default_quant_desc_input = tensor_quant.QUANT_DESC_MU_LAW
 
     def __init__(self,
                  in_channels,

@@ -313,7 +313,8 @@ class TensorQuantizer(nn.Module):
         else:
             amax = self._get_amax(inputs)
 
-        if self._fake_quant:
+        if False:
+            breakpoint()
             raise Exception("mu law does not support fake quant")
             if not TensorQuantizer.use_fb_fake_quant:
                 outputs = fake_tensor_quant(inputs, amax, self._num_bits, self._unsigned, self._narrow_range)
