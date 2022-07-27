@@ -323,14 +323,19 @@ class TensorQuantizer(nn.Module):
                     raise Exception("Exporting to ONNX in fp16 is not supported. Please export in fp32, i.e. disable AMP.")
                 outputs = self._fb_fake_quant(inputs, amax)
         else:
-            # assert self._scale is None
-            if self._mu_law:
-                assert self._num_bits > 1
-                outputs = mulaw.mu_quantize(inputs, self._num_bits, self._mu)
-            elif self._mu_law_inv:
-                outputs = mulaw.mu_inv_quantize(inputs, self._num_bits, self._mu)
+            if hasattr(self, "_mu_quantizer"):
+                outputs = self._mu_quantizer(inputs)
             else:
-                outputs, self._scale = tensor_quant(inputs, amax, self._num_bits, self._unsigned)
+                print("no mu quantizer found")
+                # assert self._scale is None
+                if self._mu_law:
+                    assert self._num_bits > 1
+                    outputs = mulaw.mu_quantize(inputs, self._num_bits, self._mu)
+                elif self._mu_law_inv:
+                    outputs = mulaw.mu_inv_quantize(inputs, self._num_bits, self._mu)
+                else:
+                    outputs, self._scale = tensor_quant(inputs, amax, \
+                                                        self._num_bits, self._unsigned)
 
         return outputs
 
